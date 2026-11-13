@@ -6,17 +6,19 @@ File này mô tả dữ liệu đã chuẩn bị ở **bước chung** (nạp d�
 
 ## 1. Repo có gì, dữ liệu lấy ở đâu
 
-Repo chỉ chứa **code và tài liệu**. Thư mục `data/` không được commit (chỉ có `.gitkeep`), nên sau khi clone sẽ **chưa có dữ liệu**. Dữ liệu đã tạo sẵn được đính kèm ở **GitHub Release** của repo.
+Repo chỉ chứa **code và tài liệu**. Thư mục `data/` không được commit (chỉ có `.gitkeep`). Dữ liệu đã tạo sẵn được **gửi riêng** bằng file `cs114_data_v1.zip`:
 
-**Cách 1 (khuyên dùng): tải từ Release `data-v1`**
+| Trong zip | Nội dung |
+|---|---|
+| `data/02-preprocessed/flights.parquet` | 7.592.200 dòng, 21 cột, 69 MB |
+| `data/02-preprocessed/prepare_data_report.json` | số dòng, tỉ lệ y=1, md5, cấu hình máy lúc tạo |
+| `MD5SUMS.txt` | md5 của 2 file trên |
 
-1. Vào tab **Releases** của repo, mở release `data-v1`, tải `flights.parquet` và `prepare_data_report.json`.
-2. Đặt cả 2 file vào `data/02-preprocessed/`.
-3. Kiểm tra md5 và số dòng như mục 3.
+**Cách dùng:** giải nén zip **ở thư mục gốc repo** (nơi có `config/`, `src/`), 2 file sẽ vào đúng `data/02-preprocessed/`. Sau đó kiểm tra md5 và số dòng như mục 3.
 
-Repo là private nên link tải cần đăng nhập GitHub. Trên Kaggle, cách đơn giản nhất là tải 2 file về máy rồi upload lên thành một Kaggle Dataset private của bạn, sau đó đọc từ `/kaggle/input/<tên-dataset>/flights.parquet`.
+**Dùng trên Kaggle:** upload `flights.parquet` (và `config.yaml` nếu cần) lên một Kaggle Dataset private của bạn, rồi đọc từ `/kaggle/input/<tên-dataset>/flights.parquet`.
 
-**Cách 2: tự tạo lại** (nếu muốn kiểm tra quy trình, xem bên dưới).
+**Tự tạo lại** (không bắt buộc, để kiểm tra quy trình): xem các bước bên dưới. Nếu đã giải nén zip thì `prepare_data` sẽ từ chối ghi đè parquet, phải thêm `--overwrite`.
 
 | File trong repo | Nội dung |
 |---|---|
@@ -27,7 +29,7 @@ Repo là private nên link tải cần đăng nhập GitHub. Trên Kaggle, cách
 | [tests/](../tests/) | test nhãn và chia tập (`python -m pytest tests`) |
 | [notebooks/EDA.ipynb](../notebooks/EDA.ipynb), [notebooks/figures/](../notebooks/figures/) | EDA đã chạy sẵn (xem được output, không cần chạy lại) |
 
-**Tự tạo dữ liệu từ file BTS gốc (cách 2):**
+**Tự tạo dữ liệu từ file BTS gốc:**
 
 1. Tải 13 file prezipped *Reporting Carrier On-Time Performance (1987-present)* từ [BTS TranStats](https://transtats.bts.gov/ONTIME/), tháng 12/2024 đến 12/2025. Tên file phải có dạng `On_Time_Reporting_Carrier_On_Time_Performance_1987_present_2025_1.zip` (năm_tháng ở cuối, không cần giải nén).
 2. Đặt cả 13 file vào `data/01-raw/`.
@@ -48,7 +50,7 @@ Phiên bản local (Python 3.13.5, Windows 11): `pandas==2.3.2`, `numpy==2.4.4`,
 `prepare_data` tự in số dòng, tỉ lệ y=1 từng split và md5. Đối chiếu với bản gốc (tạo local):
 
 - md5 `flights.parquet`: `9b1503c67beb97fc4f3a6e309d6de3c5`
-- md5 `prepare_data_report.json` (bản trong Release `data-v1`): `192993f09413f5150772bc669cb9b615`
+- md5 `prepare_data_report.json` (bản trong zip): `192993f09413f5150772bc669cb9b615`
 - md5 `config.yaml` lúc tạo parquet: `8810cbd9c87a397f417a7556bca6c7a8`. Sau đó config được thêm các mục `features`, `model`, `evaluation` (giai đoạn huấn luyện, phần `model` là của LightGBM) nên md5 config hiện tại khác. Các mục dùng để tạo parquet (`data`, `label`, `split`, `forbidden_cols`) **không đổi**, vì vậy md5 của parquet vẫn như trên.
 - Số dòng và tỉ lệ từng phần: bảng ở mục 6.
 

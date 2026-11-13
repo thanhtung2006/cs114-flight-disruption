@@ -91,4 +91,4 @@ Mọi hằng số (cột `usecols`, mốc chia, ngưỡng 60 phút, seed) đặt
 
 ## 6. Chia sẻ với thành viên kia
 
-`data/02-preprocessed/flights.parquet` và `config/config.yaml` (kèm các file sinh ra sau này) được upload lên một Kaggle Dataset private. Mỗi lần tạo lại phải in số dòng, tỉ lệ y=1 từng phần và checksum (md5) để đối chiếu.
+Code và tài liệu bàn giao qua repo GitHub (private). Dữ liệu **không** nằm trong repo: `data/02-preprocessed/flights.parquet` và `prepare_data_report.json` (kèm các file dữ liệu sinh ra sau này) được đóng gói thành một file zip (vd `cs114_data_v1.zip`, đặt ngoài repo) và người dùng tự gửi trực tiếp. Zip giữ đường dẫn `data/02-preprocessed/...` để giải nén ở thư mục gốc repo, kèm `MD5SUMS.txt`. Mỗi lần tạo lại phải in số dòng, tỉ lệ y=1 từng phần và checksum (md5) để đối chiếu, tăng số phiên bản zip và cập nhật md5 trong `docs/README.md`.

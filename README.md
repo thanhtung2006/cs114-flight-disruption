@@ -10,14 +10,15 @@ requirements.txt              # phiên bản thư viện (phải giống nhau gi
 config/config.yaml            # đường dẫn, usecols, dtype, ngưỡng 60 phút, mốc chia tập, seed
 docs/
   flight_disruption.md        # mô tả bài toán của nhóm
-data/                         # không commit
+  README.md                   # hướng dẫn dùng dữ liệu chung cho thành viên kia
+data/                         # không commit (dữ liệu gửi riêng bằng zip)
   01-raw/                     # 13 file zip BTS theo tháng (không sửa)
   02-preprocessed/            # flights.parquet (nhãn + split), prepare_data_report.json
   03-features/                # đặc trưng (giai đoạn sau)
   04-predictions/             # kết quả dự đoán (giai đoạn sau)
 entrypoint/
   prepare_data.py             # bước chung: nạp -> nhãn -> chia tập -> kiểm tra -> lưu parquet
-  train.py                    # huấn luyện (giai đoạn sau, đang là template)
+  train.py                    # huấn luyện LightGBM, đánh giá trên val
   inference.py                # dự đoán (giai đoạn sau, đang là template)
 models/                       # model đã train (giai đoạn sau)
 notebooks/
@@ -27,13 +28,13 @@ notebooks/
 src/pipelines/
   utils.py                    # load config, đường dẫn, md5, đo RAM, cấu hình máy
   data_pipeline.py            # nạp từng tháng, tạo nhãn, gán split, kiểm tra
-  feature_eng_pipeline.py     # giai đoạn sau (template)
-  training_pipeline.py        # giai đoạn sau (template)
+  feature_eng_pipeline.py     # chọn đặc trưng (schedule_v0), tách split
+  training_pipeline.py        # LightGBM: nạp train/val, huấn luyện, đánh giá
   inference_pipeline.py       # giai đoạn sau (template)
 tests/
   test_labels.py              # quy tắc nhãn 3 trường hợp, cột cấm
   test_split.py               # chia tập theo thời gian, ranh giới ngày
-  test_training.py            # template
+  test_training.py            # chống rò rỉ, không đọc test, metric, chạy end-to-end
 ```
 
 ## Cài đặt
@@ -49,5 +50,5 @@ pip install -r requirements.txt
 5. Huấn luyện LightGBM: `python -m entrypoint.train` (thêm `--overwrite` để chạy lại cùng `model.run_name`). Đọc mục `features`, `model`, `evaluation` trong config; chỉ nạp train + val, early stopping và báo metric trên val (test không dùng). Kết quả lưu ở `models/<run_name>/` (model.txt, metrics.json, calibration, feature importance) và dự đoán val ở `data/04-predictions/`.
 6. Dự đoán (`python -m entrypoint.inference`): giai đoạn sau, đang là template.
 
-## File dùng chung với Kaggle
-`data/02-preprocessed/flights.parquet` + `config/config.yaml`. Đối chiếu bằng số dòng, tỉ lệ y=1 từng split và md5 in ra khi chạy `prepare_data` (md5 parquet chỉ trùng khi cùng phiên bản pyarrow).
+## Dữ liệu dùng chung
+`data/02-preprocessed/flights.parquet` + `prepare_data_report.json` không nằm trong repo, được gửi riêng bằng file zip (giải nén ở thư mục gốc repo; bước 1–2 chỉ cần khi muốn tự tạo lại). Đối chiếu bằng số dòng, tỉ lệ y=1 từng split và md5 (xem [docs/README.md](docs/README.md), mục 3; md5 parquet chỉ trùng khi cùng phiên bản pyarrow).
