@@ -104,10 +104,43 @@ eda:
   figures_dir: notebooks/figures
   top_n_airports: [20, 50, 100]
 
+# ----------------------------------------------------------------------------- #
+# Giai đoạn huấn luyện. Các mục dưới đây KHÔNG ảnh hưởng tới flights.parquet.
+# ----------------------------------------------------------------------------- #
+
+# Bộ đặc trưng. schedule_v0 = chỉ lịch bay, chưa có lịch sử.
+# Bỏ Month (train chỉ có tháng 1-8, val/test là tháng chưa thấy) và số hiệu chuyến.
+features:
+  schedule_v0:
+    categorical: [Reporting_Airline, Origin, Dest]
+    numeric: [CRSDepTime, CRSArrTime, CRSElapsedTime, Distance, DayOfWeek]
+  # Cột không bao giờ được làm đầu vào (ngoài forbidden_cols và label_only_cols)
+  never_features: [y, label_status, is_cancelled, is_diverted, is_delay60, split,
+                   FlightDate, Tail_Number, Month]
+
+# Mô hình của người làm LightGBM (local). Random Forest (Kaggle) thêm mục riêng.
 model:
-  name: random_forest
+  name: lightgbm
+  run_name: lgbm_schedule_v0
+  feature_set: schedule_v0
+  train_split: train
+  eval_split: val            # early stopping + đánh giá; test KHÔNG dùng ở đây
+  runs_dir: models
+  predictions_dir: data/04-predictions
+  # Tham số mặc định của LightGBM (không tuning), không class weight
   params:
-    n_estimators: 100
-    random_state: 42
-  test_size: 0.2
-  save_path: models/model.joblib
+    objective: binary
+    learning_rate: 0.1
+    num_leaves: 31
+    seed: 42
+    deterministic: true
+    force_col_wise: true
+    verbosity: -1
+  num_boost_round: 5000
+  early_stopping_rounds: 100
+  eval_metrics: [binary_logloss, auc, average_precision]   # metric đầu tiên dùng cho early stopping
+  log_every: 100
+
+evaluation:
+  alert_budget: 0.10         # top 10% chuyến có điểm cao nhất
+  calibration_bins: 10       # chia bin theo quantile

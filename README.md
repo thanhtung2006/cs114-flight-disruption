@@ -46,7 +46,8 @@ pip install -r requirements.txt
 2. Bước chung: `python -m entrypoint.prepare_data` (thêm `--overwrite` nếu thật sự muốn tạo lại `flights.parquet`). Lệnh in số dòng, tỉ lệ y=1 từng split, md5 và ghi `data/02-preprocessed/prepare_data_report.json`.
 3. Test: `python -m pytest tests`
 4. EDA: `jupyter nbconvert --to notebook --execute --inplace notebooks/EDA.ipynb` (hình lưu ở `notebooks/figures/`).
-5. Huấn luyện / dự đoán: giai đoạn sau (`python -m entrypoint.train`, `python -m entrypoint.inference`).
+5. Huấn luyện LightGBM: `python -m entrypoint.train` (thêm `--overwrite` để chạy lại cùng `model.run_name`). Đọc mục `features`, `model`, `evaluation` trong config; chỉ nạp train + val, early stopping và báo metric trên val (test không dùng). Kết quả lưu ở `models/<run_name>/` (model.txt, metrics.json, calibration, feature importance) và dự đoán val ở `data/04-predictions/`.
+6. Dự đoán (`python -m entrypoint.inference`): giai đoạn sau, đang là template.
 
 ## File dùng chung với Kaggle
 `data/02-preprocessed/flights.parquet` + `config/config.yaml`. Đối chiếu bằng số dòng, tỉ lệ y=1 từng split và md5 in ra khi chạy `prepare_data` (md5 parquet chỉ trùng khi cùng phiên bản pyarrow).
