@@ -6,7 +6,17 @@ File này mô tả dữ liệu đã chuẩn bị ở **bước chung** (nạp d�
 
 ## 1. Repo có gì, dữ liệu lấy ở đâu
 
-Repo chỉ chứa **code và tài liệu**. Thư mục `data/` không được commit (chỉ có `.gitkeep`), nên sau khi clone sẽ **chưa có dữ liệu**. Hiện **chưa có Kaggle Dataset** chung; cách chia sẻ file dữ liệu sẽ thống nhất sau.
+Repo chỉ chứa **code và tài liệu**. Thư mục `data/` không được commit (chỉ có `.gitkeep`), nên sau khi clone sẽ **chưa có dữ liệu**. Dữ liệu đã tạo sẵn được đính kèm ở **GitHub Release** của repo.
+
+**Cách 1 (khuyên dùng): tải từ Release `data-v1`**
+
+1. Vào tab **Releases** của repo, mở release `data-v1`, tải `flights.parquet` và `prepare_data_report.json`.
+2. Đặt cả 2 file vào `data/02-preprocessed/`.
+3. Kiểm tra md5 và số dòng như mục 3.
+
+Repo là private nên link tải cần đăng nhập GitHub. Trên Kaggle, cách đơn giản nhất là tải 2 file về máy rồi upload lên thành một Kaggle Dataset private của bạn, sau đó đọc từ `/kaggle/input/<tên-dataset>/flights.parquet`.
+
+**Cách 2: tự tạo lại** (nếu muốn kiểm tra quy trình, xem bên dưới).
 
 | File trong repo | Nội dung |
 |---|---|
@@ -17,7 +27,7 @@ Repo chỉ chứa **code và tài liệu**. Thư mục `data/` không được c
 | [tests/](../tests/) | test nhãn và chia tập (`python -m pytest tests`) |
 | [notebooks/EDA.ipynb](../notebooks/EDA.ipynb), [notebooks/figures/](../notebooks/figures/) | EDA đã chạy sẵn (xem được output, không cần chạy lại) |
 
-**Tự tạo dữ liệu từ file BTS gốc:**
+**Tự tạo dữ liệu từ file BTS gốc (cách 2):**
 
 1. Tải 13 file prezipped *Reporting Carrier On-Time Performance (1987-present)* từ [BTS TranStats](https://transtats.bts.gov/ONTIME/), tháng 12/2024 đến 12/2025. Tên file phải có dạng `On_Time_Reporting_Carrier_On_Time_Performance_1987_present_2025_1.zip` (năm_tháng ở cuối, không cần giải nén).
 2. Đặt cả 13 file vào `data/01-raw/`.
@@ -38,7 +48,8 @@ Phiên bản local (Python 3.13.5, Windows 11): `pandas==2.3.2`, `numpy==2.4.4`,
 `prepare_data` tự in số dòng, tỉ lệ y=1 từng split và md5. Đối chiếu với bản gốc (tạo local):
 
 - md5 `flights.parquet`: `9b1503c67beb97fc4f3a6e309d6de3c5`
-- md5 `config.yaml` (bản trong repo, chưa sửa): `8810cbd9c87a397f417a7556bca6c7a8`
+- md5 `prepare_data_report.json` (bản trong Release `data-v1`): `192993f09413f5150772bc669cb9b615`
+- md5 `config.yaml` lúc tạo parquet: `8810cbd9c87a397f417a7556bca6c7a8`. Sau đó config được thêm các mục `features`, `model`, `evaluation` (giai đoạn huấn luyện, phần `model` là của LightGBM) nên md5 config hiện tại khác. Các mục dùng để tạo parquet (`data`, `label`, `split`, `forbidden_cols`) **không đổi**, vì vậy md5 của parquet vẫn như trên.
 - Số dòng và tỉ lệ từng phần: bảng ở mục 6.
 
 Hoặc kiểm tra lại bằng tay:
