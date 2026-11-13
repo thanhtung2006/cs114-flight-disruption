@@ -1,0 +1,15 @@
+# Phiên bản đang cài trên máy local (Python 3.13.5, Windows 11).
+# Thành viên chạy Kaggle cần cài CÙNG phiên bản pandas, scikit-learn, lightgbm
+# (numpy 2.4 yêu cầu Python >= 3.11). md5 của parquet chỉ so được khi cùng phiên bản pyarrow.
+pandas==2.3.2
+numpy==2.4.4
+pyarrow==23.0.1
+scikit-learn==1.7.2
+lightgbm==4.6.0
+pyyaml==6.0.3
+psutil==7.1.0
+matplotlib==3.10.0
+seaborn==0.13.2
+jupyter==1.1.1
+nbconvert==7.16.6
+pytest==9.2.0

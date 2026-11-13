@@ -1,0 +1,113 @@
+# Cấu hình chung cho project (dùng chung với thành viên chạy Kaggle)
+# Mọi hằng số của bước chung đặt ở đây, không hard-code trong code.
+
+seed: 42
+
+data:
+  raw_dir: data/01-raw
+  preprocessed_dir: data/02-preprocessed
+  features_dir: data/03-features
+  predictions_dir: data/04-predictions
+  raw_file: train.csv          # template giai đoạn sau (training_pipeline), chưa dùng
+  inference_file: test.csv     # template giai đoạn sau, chưa dùng
+
+  # File BTS theo tháng: ..._{năm}_{tháng}.zip (hoặc .csv)
+  raw_name_regex: '_(\d{4})_(\d{1,2})\.(zip|csv)$'
+  raw_months:
+    start: "2024-12"
+    end: "2025-12"
+
+  # Đầu ra bước chung
+  flights_file: data/02-preprocessed/flights.parquet
+  report_file: data/02-preprocessed/prepare_data_report.json
+
+  date_col: FlightDate
+  # Cột được nạp (Tail_Number chỉ giữ lại, chưa dùng làm đặc trưng)
+  usecols:
+    - FlightDate
+    - Reporting_Airline
+    - Flight_Number_Reporting_Airline
+    - Origin
+    - Dest
+    - CRSDepTime
+    - CRSArrTime
+    - CRSElapsedTime
+    - Distance
+    - Cancelled
+    - Diverted
+    - ArrDelay
+    - Tail_Number
+    - DayOfWeek
+    - Month
+  # Kiểu dữ liệu khi đọc (FlightDate được parse ngày riêng)
+  dtypes:
+    Reporting_Airline: category
+    Origin: category
+    Dest: category
+    Tail_Number: category
+    Flight_Number_Reporting_Airline: int16
+    CRSDepTime: int16
+    CRSArrTime: int16
+    CRSElapsedTime: float32
+    Distance: float32
+    ArrDelay: float32
+    Cancelled: float32         # đọc float (dạng 0.00) rồi kiểm tra ∈ {0,1} và ép int8
+    Diverted: float32
+    DayOfWeek: int8
+    Month: int8
+  flag_cols: [Cancelled, Diverted]   # ép sang int8 sau khi kiểm tra
+  drop_cols: ["Unnamed: 109"]
+  # Khóa để đếm trùng lặp (chỉ đếm, không tự xóa)
+  dup_key: [FlightDate, Reporting_Airline, Flight_Number_Reporting_Airline, Origin, Dest, CRSDepTime]
+
+# Cột CẤM làm đầu vào (chỉ biết sau khi bay). ArrDelay/Cancelled/Diverted chỉ dùng tạo nhãn.
+forbidden_cols:
+  - DepTime
+  - DepDelay
+  - DepDelayMinutes
+  - DepDel15
+  - TaxiOut
+  - WheelsOff
+  - WheelsOn
+  - TaxiIn
+  - ArrTime
+  - ArrDelayMinutes
+  - ArrDel15
+  - ActualElapsedTime
+  - AirTime
+  - CarrierDelay
+  - WeatherDelay
+  - NASDelay
+  - SecurityDelay
+  - LateAircraftDelay
+  - CancellationCode
+forbidden_prefixes: [Div]
+label_only_cols: [ArrDelay, Cancelled, Diverted]
+
+label:
+  delay_threshold_min: 60
+
+target: y
+
+# Chia theo thời gian (FlightDate), đề xuất, chưa chốt hẳn. Các đoạn theo thứ tự thời gian.
+split:
+  col: split
+  ranges:
+    - {name: warmup, start: "2024-12-01", end: "2024-12-31"}
+    - {name: train,  start: "2025-01-01", end: "2025-08-24"}
+    - {name: gap,    start: "2025-08-25", end: "2025-08-31"}
+    - {name: val,    start: "2025-09-01", end: "2025-10-24"}
+    - {name: gap,    start: "2025-10-25", end: "2025-10-31"}
+    - {name: test,   start: "2025-11-01", end: "2025-12-31"}
+
+eda:
+  figures_dir: notebooks/figures
+  top_n_airports: [20, 50, 100]
+
+model:
+  name: random_forest
+  params:
+    n_estimators: 100
+    random_state: 42
+  test_size: 0.2
+  save_path: models/model.joblib

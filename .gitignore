@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data & models (giữ lại cấu trúc thư mục)
+# Toàn bộ file trong data/ KHÔNG commit (raw BTS, flights.parquet...); chỉ giữ .gitkeep.
+# Không dùng dòng "data/" trần vì sẽ ignore cả thư mục và làm mất ngoại lệ .gitkeep.
+data/**/*
+!data/**/
+!data/**/.gitkeep
+models/*
+!models/.gitkeep
+
+# Test
+.pytest_cache/
