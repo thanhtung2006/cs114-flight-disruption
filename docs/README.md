@@ -4,18 +4,27 @@ File này mô tả dữ liệu đã chuẩn bị ở **bước chung** (nạp d�
 
 > **Trạng thái: v1, bản nền.** Mốc chia tập vẫn là **đề xuất**, phạm vi sân bay **chưa chốt**, **chưa có đặc trưng** (lịch sử 7/30 ngày, T-24h, múi giờ). Nếu mốc chia thay đổi, file parquet và md5 sẽ đổi, khi đó sẽ có version mới.
 
-## 1. File nhận được
+## 1. Repo có gì, dữ liệu lấy ở đâu
 
-Dữ liệu (không nằm trong git) được chia sẻ qua một Kaggle Dataset private:
+Repo chỉ chứa **code và tài liệu**. Thư mục `data/` không được commit (chỉ có `.gitkeep`), nên sau khi clone sẽ **chưa có dữ liệu**. Hiện **chưa có Kaggle Dataset** chung; cách chia sẻ file dữ liệu sẽ thống nhất sau.
 
-| File | Nội dung |
+| File trong repo | Nội dung |
 |---|---|
-| `flights.parquet` | toàn bộ chuyến bay 12/2024 đến 12/2025, có nhãn và cột `split` (7.592.200 dòng, 21 cột, 69 MB) |
-| `config.yaml` | mốc chia, ngưỡng 60 phút, danh sách cột cấm, seed 42 |
-| `prepare_data_report.json` | số dòng theo tháng và split, tỉ lệ y=1, kiểm tra `ArrDelay`, md5, cấu hình máy |
-| `requirements.txt` | phiên bản thư viện, cần cài **giống nhau** ở hai bên |
+| [config/config.yaml](../config/config.yaml) | đường dẫn, cột nạp, mốc chia, ngưỡng 60 phút, danh sách cột cấm, seed 42 |
+| [requirements.txt](../requirements.txt) | phiên bản thư viện, cần cài **giống nhau** ở hai bên |
+| [src/pipelines/data_pipeline.py](../src/pipelines/data_pipeline.py) | nạp từng tháng, tạo nhãn, gán split, kiểm tra |
+| [entrypoint/prepare_data.py](../entrypoint/prepare_data.py) | chạy toàn bộ bước chung, ghi parquet + báo cáo |
+| [tests/](../tests/) | test nhãn và chia tập (`python -m pytest tests`) |
+| [notebooks/EDA.ipynb](../notebooks/EDA.ipynb), [notebooks/figures/](../notebooks/figures/) | EDA đã chạy sẵn (xem được output, không cần chạy lại) |
 
-Code tạo dữ liệu nằm trong repo này: [src/pipelines/data_pipeline.py](../src/pipelines/data_pipeline.py), [entrypoint/prepare_data.py](../entrypoint/prepare_data.py). Test: [tests/](../tests/).
+**Tự tạo dữ liệu từ file BTS gốc:**
+
+1. Tải 13 file prezipped *Reporting Carrier On-Time Performance (1987-present)* từ [BTS TranStats](https://transtats.bts.gov/ONTIME/), tháng 12/2024 đến 12/2025. Tên file phải có dạng `On_Time_Reporting_Carrier_On_Time_Performance_1987_present_2025_1.zip` (năm_tháng ở cuối, không cần giải nén).
+2. Đặt cả 13 file vào `data/01-raw/`.
+3. Từ thư mục gốc repo: `python -m entrypoint.prepare_data`. Lần chạy local mất 64,5 giây, RAM đỉnh khoảng 1,4 GB.
+4. Kết quả: `data/02-preprocessed/flights.parquet` (7.592.200 dòng, 21 cột, khoảng 69 MB) và `data/02-preprocessed/prepare_data_report.json`.
+
+**Chạy trên Kaggle:** upload 13 file zip thành một input riêng, clone repo vào `/kaggle/working`, rồi sửa `data.raw_dir` trong `config.yaml` thành đường dẫn tuyệt đối của input (vd `/kaggle/input/<tên-input>`). Các đường dẫn tuyệt đối được dùng nguyên; file đầu ra vẫn ghi vào `data/02-preprocessed/` trong repo. Lưu ý: sửa config thì md5 của `config.yaml` sẽ khác, chỉ cần các mục còn lại không đổi.
 
 ## 2. Môi trường
 
@@ -24,25 +33,26 @@ Phiên bản local (Python 3.13.5, Windows 11): `pandas==2.3.2`, `numpy==2.4.4`,
 - Trên Kaggle cần cài cùng phiên bản `pandas`, `scikit-learn`, `lightgbm` (numpy 2.4 yêu cầu Python ≥ 3.11).
 - Thời gian và RAM đo trên Kaggle **không so trực tiếp** với local; luôn ghi kèm cấu hình máy.
 
-## 3. Kiểm tra sau khi tải
+## 3. Kiểm tra sau khi tạo dữ liệu
 
-Đường dẫn trong `config.yaml` là đường dẫn local (`data/02-preprocessed/...`). Trên Kaggle, đọc từ `/kaggle/input/<tên-dataset>/`.
+`prepare_data` tự in số dòng, tỉ lệ y=1 từng split và md5. Đối chiếu với bản gốc (tạo local):
+
+- md5 `flights.parquet`: `9b1503c67beb97fc4f3a6e309d6de3c5`
+- md5 `config.yaml` (bản trong repo, chưa sửa): `8810cbd9c87a397f417a7556bca6c7a8`
+- Số dòng và tỉ lệ từng phần: bảng ở mục 6.
+
+Hoặc kiểm tra lại bằng tay:
 
 ```python
-import hashlib
 import pandas as pd
 
-path = "/kaggle/input/<tên-dataset>/flights.parquet"
-print(hashlib.md5(open(path, "rb").read()).hexdigest())
-# phải ra: 9b1503c67beb97fc4f3a6e309d6de3c5   (md5 config.yaml: 8810cbd9c87a397f417a7556bca6c7a8)
-
-df = pd.read_parquet(path)
+df = pd.read_parquet("data/02-preprocessed/flights.parquet")
 print(df.shape)  # (7592200, 21)
 det = df[df["label_status"] != "undetermined"]
 print(det.groupby("split", observed=True)["y"].agg(["size", "mean"]))
 ```
 
-Kết quả phải khớp bảng ở mục 6. Nếu md5 khác nhưng số dòng và tỉ lệ khớp thì thường do khác phiên bản pyarrow; báo lại để kiểm tra.
+md5 của parquet chỉ trùng khi cùng phiên bản pandas/pyarrow. Nếu md5 khác nhưng số dòng và tỉ lệ từng phần khớp mục 6 thì dữ liệu vẫn giống nhau; nếu số liệu khác thì báo lại để kiểm tra.
 
 ## 4. Các cột
 
@@ -122,5 +132,5 @@ Tỉ lệ tính trên các dòng có nhãn xác định.
 
 - Chốt mốc chia và phạm vi sân bay (chỉ dựa trên train).
 - Bảng múi giờ sân bay, tính mốc T-24h theo UTC.
-- Đặc trưng lịch sử 7/30 ngày theo sân bay đi, sân bay đến, hãng, tuyến. Dự kiến tạo **một file đặc trưng dùng chung** và đưa lên version mới của Kaggle Dataset.
+- Đặc trưng lịch sử 7/30 ngày theo sân bay đi, sân bay đến, hãng, tuyến. Dự kiến tạo **một file đặc trưng dùng chung** cho cả hai mô hình (cách chia sẻ file sẽ thống nhất sau).
 - Metric: ROC-AUC, AP, Brier + calibration, Recall/Precision tại top 10% (xem [flight_disruption.md](flight_disruption.md), mục 5).
